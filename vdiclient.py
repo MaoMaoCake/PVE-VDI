@@ -9,9 +9,15 @@ import subprocess
 from time import sleep
 from io import StringIO
 
+import tkinter as tk
+from tkinter import ttk
 class VDIClient:
     # default configs
+    tk_root = tk.Tk()
+    mainFrame = tk.Frame(tk_root)
+    mainFrame.grid()
     hosts = [] # the host that we can select
+    unique_hosts = set()
     spice_proxy = {} # if we need proxying
     config = None # the config object for the app
     proxmox = None
@@ -27,11 +33,15 @@ class VDIClient:
                 print(e)
         # set the host vars
         self.hosts = self.config.get("host")
+        for host in self.hosts:
+            self.unique_hosts.add(host.get("name"))
         proxy = self.config.get("proxmox").get("SpiceProxyRedirect")
         if proxy:
             self.spice_proxy = proxy
+        self.config_ui()
+    def config_ui(self):
+        self.tk_root.title(self.config.get("ui").get('title'))
     def pve_auth(self, username, selected_host, passwd=None, totp=None):
-        print(self.hosts)
         err = None
         connected = False
         authenticated = False
@@ -71,6 +81,53 @@ class VDIClient:
                     err = e
                     connected = False
         return connected, authenticated, err
+
+    # utility for tkinter
+    def clear(self, object):
+        slaves = object.grid_slaves()
+        for x in slaves:
+            x.destroy()
+    def login(self, *args, **kwargs):
+        connected, authenticated, err = self.pve_auth(*args, **kwargs)
+        if connected and authenticated:
+            print("Connected")
+        elif connected and not authenticated:
+            print("wrong username or password", err)
+        elif not connected:
+            print("Connection to the server cannot be established", err)
+    def login_window(self):
+        selected_host = tk.StringVar()
+        use_totp = self.config.get("proxmox").get("authentication").get("auth_totp")
+        self.clear(self.mainFrame)
+
+        tk.Label(self.mainFrame, text="username").grid(row=0, column=0)
+        username = tk.Entry(self.mainFrame)
+        username.grid(row=0, column=1)
+
+        tk.Label(self.mainFrame, text="password").grid(row=1, column=0)
+        password = tk.Entry(self.mainFrame)
+        password.grid(row=1, column=1)
+        if use_totp:
+            tk.Label(self.mainFrame, text="TOTP").grid(row=2, column=0)
+            totp = tk.Entry(self.mainFrame)
+            totp.grid(row=2, column=1)
+        tk.Label(self.mainFrame, text="Host Name").grid(row=3, column=0)
+        tk.OptionMenu(self.mainFrame, selected_host, *self.unique_hosts).grid(row=3, column=1)
+        # different submit button
+        if use_totp:
+            tk.Button(self.mainFrame, text="Login", command=lambda:
+                self.login(username=username.get(), selected_host=selected_host.get(),
+                              passwd=password.get(), totp=totp.get()))\
+                                .grid(row=4, column=1)
+        else:
+            tk.Button(self.mainFrame, text="Login", command=lambda:
+            self.login(username=username.get(), selected_host=selected_host.get(),
+                          passwd=password.get())) \
+                .grid(row=4, column=1)
+
+    def run(self):
+        self.login_window()
+        self.tk_root.mainloop()
 
 
 if __name__ == "__main__":
