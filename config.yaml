@@ -1,0 +1,44 @@
+# UI Config
+ui:
+  title: VDI Login
+  tag-line: Proxmox VDI
+  vdi-icon: vdiicon.ico
+  vdi-logo: vdiclient.png
+  kiosk: False
+  fullscreen: True
+
+debug:
+  ini-viewer: False
+
+vm-config:
+  vm-type: all # lxc or qemu or all
+
+proxmox:
+  authentication:
+    auth_backend: pve # pve or pam or whatever is configured on PVE
+    auth_totp: False # enable or disable totp field
+    tls_verify: False # False or True or path to certificate to verify
+#  token:
+#    name:
+#    username:
+#    value:
+  SpiceProxyRedirect: # get from viewing the ini file
+    from: pve1.example.com
+    from-port: 3128
+    to: 10.10.10.100
+    to-port: 3128
+
+host:
+  - name: "Host 1"
+    ip: 10.10.10.100
+    port: 8006
+  - name: "host 2"
+    ip: 10.10.10.100
+    port: 8006
+  # add as much host as you want this will affect the login dropdown
+
+# If you wish to define additional parameters to pass to virt-viewer you may define them here
+# More parameter definitions here: https://www.mankier.com/1/remote-viewer
+virt-viewer:
+  enable-usbredir: True
+  enable-usb-autoshare: True
