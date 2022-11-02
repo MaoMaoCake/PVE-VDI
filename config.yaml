@@ -6,12 +6,10 @@ ui:
   vdi-logo: vdiclient.png
   kiosk: False
   fullscreen: True
+  theme: default
 
 debug:
   ini-viewer: False
-
-vm-config:
-  vm-type: all # lxc or qemu or all
 
 proxmox:
   authentication:
@@ -27,6 +25,7 @@ proxmox:
     from-port: 3128
     to: 10.10.10.100
     to-port: 3128
+  show-vm-type: all # lxc or qemu or all
 
 host:
   - name: "Host 1"
