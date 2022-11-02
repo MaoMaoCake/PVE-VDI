@@ -16,11 +16,16 @@ proxmox:
     auth_backend: pve # pve or pam or whatever is configured on PVE
     auth_totp: False # enable or disable totp field
     tls_verify: False # False or True or path to certificate to verify
-#  token:
-#    name:
-#    username:
-#    value:
-  SpiceProxyRedirect: # get from viewing the ini file
+  token:
+    name: None
+    username: None
+    value: None
+#  SpiceProxyRedirect: False # For if you dont need proxy
+#    from: pve1.example.com
+#    from-port: 3128
+#    to: 10.10.10.100
+#    to-port: 3128
+  SpiceProxyRedirect: # get from viewing the ini file if not config
     from: pve1.example.com
     from-port: 3128
     to: 10.10.10.100

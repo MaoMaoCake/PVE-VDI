@@ -1,6 +1,7 @@
 # import ui
 import os
 import sys
+import yaml
 import random
 import requests
 import proxmoxer
@@ -10,33 +11,23 @@ from io import StringIO
 
 class VDIClient:
     # default configs
-    hosts = []
-    spice_proxy = {}
-    proxmox = None
-    scaling = 1
-    title = "VDI Login"
-    backend = 'pve'
-    user = ""
-    token_name = None
-    token_value = None
-    totp = False
-    kiosk = False
-    fullscreen = True
-    verify_ssl = True
-    icon = None
-    additional_params = None
-    # theme = 'LightBlue'
-    guest_type = 'both'
-    config = None
-    logged_in = False
+    hosts = [] # the host that we can select
+    spice_proxy = {} # if we need proxying
+    config = None # the config object for the app
 
-    def __init__(self, config):
+    def __init__(self, config_path):
         # loadconfig
-        self.config = config # parse yaml
-        pass
-
-
+        with open(config_path, "r") as f:
+            try:
+                self.config = yaml.safe_load(f) # parse yaml
+            except yaml.YAMLError as e:
+                print(e)
+        # set the host vars
+        self.hosts = self.config.get("host")
+        proxy = self.config.get("proxmox").get("SpiceProxyRedirect")
+        if proxy:
+            self.spice_proxy = proxy
 
 if __name__ == "__main__":
-    app = VDIClient(config="filename")
+    app = VDIClient(config_path="config.yaml")
     app.run()
