@@ -11,6 +11,7 @@ from io import StringIO
 
 import tkinter as tk
 from tkinter import ttk
+from PIL import ImageTk, Image
 class VDIClient:
     # default configs
     tk_root = tk.Tk()
@@ -152,8 +153,11 @@ class VDIClient:
                 .grid(row=4, column=1)
         tk.Button(self.mainFrame, text="Cancel", command=self.cancel_login).grid(row=4,column=0)
     def create_vm_entry(self, vm, parent):
-        vmFrame = tk.Frame(parent)
-        tk.Label(vmFrame, text=f"{vm.get('type')}").grid(row=0, column=0, rowspan=2)
+        vmFrame = tk.Frame(parent, width=self.width)
+        img = self.get_machine_logo(vm.get("type"))
+        panel = tk.Label(vmFrame, image=img)
+        panel.image = img
+        panel.grid(row=0, column=0, rowspan=3)
         tk.Label(vmFrame, text=f"{vm.get('name')}").grid(row=0, column=1, columnspan=2)
         tk.Label(vmFrame, text=f"VM:{vm.get('vmid')}").grid(row=1, column=1, columnspan=2)
         tk.Label(vmFrame, text=f"{vm.get('status')}").grid(row=2, column=1, columnspan=2)
@@ -174,7 +178,7 @@ class VDIClient:
             canvas.configure(yscrollcommand=scrollbar.set)
             canvas.create_window((0, 0), window=scrollFrame, anchor="nw", width=self.width)
             for vm in vm_list:
-                self.create_vm_entry(vm, scrollFrame).grid()
+                self.create_vm_entry(vm, scrollFrame).grid(sticky="nsew")
             canvas.grid(row=0, column=0)
             scrollbar.grid(row=0, rowspan=10, column=1, sticky=tk.N + tk.S)
 
@@ -207,6 +211,15 @@ class VDIClient:
     def run(self):
         self.login_window()
         self.tk_root.mainloop()
+
+    def get_machine_logo(self,type):
+        img = Image.open(f"assets/{type}.png")
+        if type == 'qemu':
+            img = img.resize((60,50), Image.ANTIALIAS)
+        if type == 'lxc':
+            img = img.resize((50, 50), Image.ANTIALIAS)
+        img = ImageTk.PhotoImage(img)
+        return img
 
 
 if __name__ == "__main__":
