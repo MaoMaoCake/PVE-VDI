@@ -40,10 +40,23 @@ class VDIClient:
         if proxy:
             self.spice_proxy = proxy
         self.config_ui()
+
+    def get_scaling(self):
+        return 1
     def config_ui(self):
+        # todo handle scaling
+        self.width = 400 * self.get_scaling()
+        self.height = 200 * self.get_scaling()
+
+        if self.config.get("ui").get("fullscreen"):
+            self.tk_root.attributes('-zoomed', True)
+
+        if self.config.get("ui").get("kiosk"):
+            self.tk_root.attributes("-fullscreen", True)
+
         self.tk_root.title(self.config.get("ui").get('title'))
         self.tk_root.resizable(False, False)
-        self.tk_root.geometry(f'{400}x{200}')
+        self.tk_root.geometry(f'{self.width}x{self.height}')
         self.tk_root.grid_rowconfigure(0, weight=1)
         self.tk_root.grid_columnconfigure(0, weight=1)
         self.mainFrame = tk.Frame(self.tk_root, width=self.width, height=self.height)
@@ -105,6 +118,8 @@ class VDIClient:
             print("wrong username or password", err)
         elif not connected:
             print("Connection to the server cannot be established", err)
+    def cancel_login(self):
+        self.tk_root.destroy()
     def login_window(self):
         selected_host = tk.StringVar()
         selected_host.set(self.hosts[0].get("name")) # get the first value
@@ -135,7 +150,7 @@ class VDIClient:
             self.login(username=username.get(), selected_host=selected_host.get(),
                           passwd=password.get())) \
                 .grid(row=4, column=1)
-
+        tk.Button(self.mainFrame, text="Cancel", command=self.cancel_login).grid(row=4,column=0)
     def create_vm_entry(self, vm, parent):
         vmFrame = tk.Frame(parent)
         tk.Label(vmFrame, text=f"{vm.get('type')}").grid(row=0, column=0, rowspan=2)
