@@ -22,6 +22,8 @@ class VDIClient:
     proxmox = None
     scaling = 1
     logged_in = False
+    width = 400
+    height = 200
 
     def __init__(self, config_path):
         # loadconfig
@@ -44,7 +46,7 @@ class VDIClient:
         self.tk_root.geometry(f'{400}x{200}')
         self.tk_root.grid_rowconfigure(0, weight=1)
         self.tk_root.grid_columnconfigure(0, weight=1)
-        self.mainFrame = tk.Frame(self.tk_root, width=400, height=200)
+        self.mainFrame = tk.Frame(self.tk_root, width=self.width, height=self.height)
         self.mainFrame.grid(sticky="nsew")
         self.mainFrame.grid_rowconfigure(0, weight=1)
         self.mainFrame.grid_columnconfigure(0, weight=1)
@@ -105,7 +107,7 @@ class VDIClient:
             print("Connection to the server cannot be established", err)
     def login_window(self):
         selected_host = tk.StringVar()
-        selected_host.set(next(iter(self.unique_hosts))) # get the first value
+        selected_host.set(self.hosts[0].get("name")) # get the first value
         use_totp = self.config.get("proxmox").get("authentication").get("auth_totp")
         self.clear(self.mainFrame)
 
@@ -151,11 +153,11 @@ class VDIClient:
             # get vm list
             canvas = tk.Canvas(self.mainFrame)
             scrollbar = tk.Scrollbar(self.mainFrame, orient=tk.VERTICAL, command=canvas.yview)
-            scrollFrame = tk.Frame(canvas, width=400, bg="red")
+            scrollFrame = tk.Frame(canvas, width=self.width)
             scrollFrame.grid_rowconfigure(0, weight=1)
             scrollFrame.grid_columnconfigure(0, weight=1)
             canvas.configure(yscrollcommand=scrollbar.set)
-            canvas.create_window((0, 0), window=scrollFrame, anchor="nw", width=400)
+            canvas.create_window((0, 0), window=scrollFrame, anchor="nw", width=self.width)
             for vm in vm_list:
                 self.create_vm_entry(vm, scrollFrame).grid()
             canvas.grid(row=0, column=0)
