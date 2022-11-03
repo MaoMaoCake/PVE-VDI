@@ -91,6 +91,7 @@ class VDIClient:
         connected, authenticated, err = self.pve_auth(*args, **kwargs)
         if connected and authenticated:
             print("Connected")
+            self.vm_window()
         elif connected and not authenticated:
             print("wrong username or password", err)
         elif not connected:
@@ -125,6 +126,31 @@ class VDIClient:
                           passwd=password.get())) \
                 .grid(row=4, column=1)
 
+    def vm_window(self):
+        vm_list = self.get_vms()
+        print(vm_list)
+        if vm_list:
+            # show window
+            pass
+        else:
+            # show empty
+            pass
+
+    def get_vms(self):
+        vms = []
+        try:
+            wanted_vms = self.config.get("proxmox").get("show-vm-type")
+            for vm in self.proxmox.cluster.resources.get(type='vm'):
+                if 'template' in vm and vm['template']: # skip templates
+                    continue
+                if wanted_vms == 'all': # get all vms
+                    vms.append(vm)
+                elif wanted_vms == vm['type']: # get only the ones we want
+                    vms.append(vm)
+            return vms
+        except proxmoxer.core.ResourceException as e:
+            print(f"Unable to display list of VMs:\n {e!r}", 'OK')
+            return False
     def run(self):
         self.login_window()
         self.tk_root.mainloop()
