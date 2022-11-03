@@ -107,7 +107,7 @@ class VDIClient:
         username.grid(row=0, column=1)
 
         tk.Label(self.mainFrame, text="password").grid(row=1, column=0)
-        password = tk.Entry(self.mainFrame)
+        password = tk.Entry(self.mainFrame, show="●")
         password.grid(row=1, column=1)
         if use_totp:
             tk.Label(self.mainFrame, text="TOTP").grid(row=2, column=0)
