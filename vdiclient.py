@@ -98,6 +98,7 @@ class VDIClient:
             print("Connection to the server cannot be established", err)
     def login_window(self):
         selected_host = tk.StringVar()
+        selected_host.set(next(iter(self.unique_hosts))) # get the first value
         use_totp = self.config.get("proxmox").get("authentication").get("auth_totp")
         self.clear(self.mainFrame)
 
