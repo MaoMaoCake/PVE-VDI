@@ -14,8 +14,7 @@ from tkinter import ttk
 class VDIClient:
     # default configs
     tk_root = tk.Tk()
-    mainFrame = tk.Frame(tk_root)
-    mainFrame.grid()
+    mainFrame = None
     hosts = [] # the host that we can select
     unique_hosts = set()
     spice_proxy = {} # if we need proxying
@@ -41,6 +40,14 @@ class VDIClient:
         self.config_ui()
     def config_ui(self):
         self.tk_root.title(self.config.get("ui").get('title'))
+        self.tk_root.resizable(False, False)
+        self.tk_root.geometry(f'{400}x{200}')
+        self.tk_root.grid_rowconfigure(0, weight=1)
+        self.tk_root.grid_columnconfigure(0, weight=1)
+        self.mainFrame = tk.Frame(self.tk_root, width=400, height=200)
+        self.mainFrame.grid(sticky="nsew")
+        self.mainFrame.grid_rowconfigure(0, weight=1)
+        self.mainFrame.grid_columnconfigure(0, weight=1)
     def pve_auth(self, username, selected_host, passwd=None, totp=None):
         err = None
         connected = False
@@ -144,20 +151,23 @@ class VDIClient:
             # get vm list
             canvas = tk.Canvas(self.mainFrame)
             scrollbar = tk.Scrollbar(self.mainFrame, orient=tk.VERTICAL, command=canvas.yview)
-            scrollFrame = tk.Frame(canvas)
+            scrollFrame = tk.Frame(canvas, width=400, bg="red")
+            scrollFrame.grid_rowconfigure(0, weight=1)
+            scrollFrame.grid_columnconfigure(0, weight=1)
+            canvas.configure(yscrollcommand=scrollbar.set)
+            canvas.create_window((0, 0), window=scrollFrame, anchor="nw", width=400)
+            for vm in vm_list:
+                self.create_vm_entry(vm, scrollFrame).grid()
+            canvas.grid(row=0, column=0)
+            scrollbar.grid(row=0, rowspan=10, column=1, sticky=tk.N + tk.S)
+
+            # bind the scroll with the canvas
             scrollFrame.bind(
                 "<Configure>",
                 lambda e: canvas.configure(
                     scrollregion=canvas.bbox("all")
                 )
             )
-            canvas.create_window((0, 0), window=scrollFrame, anchor="nw")
-
-            canvas.configure(yscrollcommand=scrollbar.set)
-            for vm in vm_list:
-                self.create_vm_entry(vm, scrollFrame).grid()
-            canvas.grid(row=0, column=0)
-            scrollbar.grid(row=0, rowspan=10, column=1, sticky=tk.N + tk.S)
         else:
             # show empty
             pass
