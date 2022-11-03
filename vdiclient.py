@@ -126,12 +126,35 @@ class VDIClient:
                           passwd=password.get())) \
                 .grid(row=4, column=1)
 
+    def create_vm_entry(self, vm, parent):
+        vmFrame = tk.Frame(parent)
+        tk.Label(vmFrame, text=f"VM:{vm.get('vmid')}").grid(row=0, column=0, columnspan=2)
+        tk.Label(vmFrame, text=f"{vm.get('name')}").grid(row=1, column=0, columnspan=2)
+        tk.Button(vmFrame, text="Connect").grid(row=0, rowspan=2, column=3)
+        return vmFrame
+
     def vm_window(self):
         vm_list = self.get_vms()
         print(vm_list)
         if vm_list:
-            # show window
-            pass
+            self.clear(self.mainFrame)
+            # get vm list
+            canvas = tk.Canvas(self.mainFrame)
+            scrollbar = tk.Scrollbar(self.mainFrame, orient=tk.VERTICAL, command=canvas.yview)
+            scrollFrame = tk.Frame(canvas)
+            scrollFrame.bind(
+                "<Configure>",
+                lambda e: canvas.configure(
+                    scrollregion=canvas.bbox("all")
+                )
+            )
+            canvas.create_window((0, 0), window=scrollFrame, anchor="nw")
+
+            canvas.configure(yscrollcommand=scrollbar.set)
+            for vm in vm_list:
+                self.create_vm_entry(vm, scrollFrame).grid()
+            canvas.grid(row=0, column=0)
+            scrollbar.grid(row=0, rowspan=10, column=1, sticky=tk.N + tk.S)
         else:
             # show empty
             pass
