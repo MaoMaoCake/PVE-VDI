@@ -129,9 +129,11 @@ class VDIClient:
 
     def create_vm_entry(self, vm, parent):
         vmFrame = tk.Frame(parent)
-        tk.Label(vmFrame, text=f"VM:{vm.get('vmid')}").grid(row=0, column=0, columnspan=2)
-        tk.Label(vmFrame, text=f"{vm.get('name')}").grid(row=1, column=0, columnspan=2)
-        tk.Button(vmFrame, text="Connect").grid(row=0, rowspan=2, column=3)
+        tk.Label(vmFrame, text=f"{vm.get('type')}").grid(row=0, column=0, rowspan=2)
+        tk.Label(vmFrame, text=f"{vm.get('name')}").grid(row=0, column=1, columnspan=2)
+        tk.Label(vmFrame, text=f"VM:{vm.get('vmid')}").grid(row=1, column=1, columnspan=2)
+        tk.Label(vmFrame, text=f"{vm.get('status')}").grid(row=2, column=1, columnspan=2)
+        tk.Button(vmFrame, text="Connect").grid(row=0, rowspan=2, column=4)
         return vmFrame
 
     def vm_window(self):
