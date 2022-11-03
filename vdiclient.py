@@ -153,15 +153,18 @@ class VDIClient:
                 .grid(row=4, column=1)
         tk.Button(self.mainFrame, text="Cancel", command=self.cancel_login).grid(row=4,column=0)
     def create_vm_entry(self, vm, parent):
+        frame_width = 25
+        frame_height = 100
         vmFrame = tk.Frame(parent, width=self.width)
         img = self.get_machine_logo(vm.get("type"))
-        panel = tk.Label(vmFrame, image=img)
+        panel = tk.Label(vmFrame, image=img, height=frame_height)
         panel.image = img
         panel.grid(row=0, column=0, rowspan=3)
-        tk.Label(vmFrame, text=f"{vm.get('name')}").grid(row=0, column=1, columnspan=2)
-        tk.Label(vmFrame, text=f"VM:{vm.get('vmid')}").grid(row=1, column=1, columnspan=2)
-        tk.Label(vmFrame, text=f"{vm.get('status')}").grid(row=2, column=1, columnspan=2)
+        tk.Label(vmFrame, text=f"{vm.get('name')}", width=frame_width, justify='left').grid(row=0, column=1, columnspan=2)
+        tk.Label(vmFrame, text=f"VM:{vm.get('vmid')}", width=frame_width, justify='left').grid(row=1, column=1, columnspan=2)
+        tk.Label(vmFrame, text=f"{vm.get('status')}", width=frame_width, justify='left').grid(row=2, column=1, columnspan=2)
         tk.Button(vmFrame, text="Connect").grid(row=0, rowspan=2, column=4)
+        ttk.Separator(vmFrame, orient='horizontal').grid(row=4, column=0 ,columnspan=6, sticky='ew')
         return vmFrame
 
     def vm_window(self):
@@ -217,7 +220,7 @@ class VDIClient:
         if type == 'qemu':
             img = img.resize((60,50), Image.ANTIALIAS)
         if type == 'lxc':
-            img = img.resize((50, 50), Image.ANTIALIAS)
+            img = img.resize((60, 60), Image.ANTIALIAS)
         img = ImageTk.PhotoImage(img)
         return img
 
