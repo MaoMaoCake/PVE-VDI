@@ -1,0 +1,69 @@
+# This config is meant to be an example, there will be duplicate keys that will break the program e.g. token
+# These duplicates will be marked #dupe
+
+# UI Config
+ui:
+  # this is the titlebar of the program
+  title: VDI Login
+  # ima have to figure out where to put these
+  tag-line: Proxmox VDI
+  vdi-icon: vdiicon.ico
+  vdi-logo: vdiclient.png
+  # prevents
+  kiosk: False
+  # opens virt viewer in fullscreen
+  fullscreen: True
+  # idk theming yet
+  theme: default
+
+debug:
+  # show the config before connecting to vire viewer
+  # not implemented
+  config-viewer: False
+
+proxmox:
+  # proxmox authentication parameters
+  authentication:
+    auth_backend: pve # pve or pam or whatever is configured on PVE
+    auth_totp: False # enable or disable totp field
+    tls_verify: False # False or True or path to certificate to verify
+    # If not logging in with a token
+    token: False #dupe
+    token: #dupe
+      name: 'iamatoken'
+      username: username
+      value: supersecrettoken
+  # proxmox autofill the spice proxy usually with its fqdn,
+  # if using behind a reverse proxy or the fqdn does not resolve
+  # fill in from with the fqdn and to with the actual ip,
+  # the port should not need to be changed
+  SpiceProxyRedirect: False # For if you don't need proxy #dupe
+  SpiceProxyRedirect: # get from viewing the ini file if not config #dupe
+    from: "pve1.example.com:3128"
+    to: "10.10.10.100:3128"
+  # filter to show either qemu or lxc or all when users login
+  show-vm-type: all # lxc or qemu or all
+  # if the vm state is not 'running' the program will try to start it on proxmox
+  # this is the amount of times it will wait until it thinks that the vm is unavailable
+  vm-start-timeout: 30 # how many seconds to wait for the VM before giving up
+
+host:
+  # hosts are keys that the program uses to connect to a proxmox cluster
+  # same keys are treated as the same group
+  # in this example if Host 1 is selected, it will try 10.10.10.100 before 172.16.1.2
+  - name: "Host 1"
+    ip: 10.10.10.100
+    port: 8006
+  - name: "host 2"
+    ip: 10.10.10.100
+    port: 8006
+  - name: "Host 1"
+    ip: 172.16.1.2
+    port: 8006
+  # add as much host as you want this will affect the login dropdown
+
+# If you wish to define additional parameters to pass to virt-viewer you may define them here
+# More parameter definitions here: https://www.mankier.com/1/remote-viewer
+virt-viewer:
+  - enable-usbredir: True
+  - enable-usb-autoshare: True
