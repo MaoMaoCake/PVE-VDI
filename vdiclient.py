@@ -1,6 +1,9 @@
 # import ui
+import configparser
 import os
 import sys
+import time
+
 import yaml
 import random
 import requests
@@ -25,6 +28,7 @@ class VDIClient:
     logged_in = False
     width = 400
     height = 200
+    spice_client = None
 
     def __init__(self, config_path):
         # loadconfig
@@ -127,18 +131,19 @@ class VDIClient:
         use_totp = self.config.get("proxmox").get("authentication").get("auth_totp")
         self.clear(self.mainFrame)
 
-        tk.Label(self.mainFrame, text="username").grid(row=0, column=0)
-        username = tk.Entry(self.mainFrame)
+        width = 20
+        tk.Label(self.mainFrame, text="username", width= width ).grid(row=0, column=0, sticky='w')
+        username = tk.Entry(self.mainFrame, width=width*2 )
         username.grid(row=0, column=1)
 
-        tk.Label(self.mainFrame, text="password").grid(row=1, column=0)
-        password = tk.Entry(self.mainFrame, show="●")
+        tk.Label(self.mainFrame, text="password", width=width).grid(row=1, column=0)
+        password = tk.Entry(self.mainFrame, show="●", width=width*2)
         password.grid(row=1, column=1)
         if use_totp:
-            tk.Label(self.mainFrame, text="TOTP").grid(row=2, column=0)
-            totp = tk.Entry(self.mainFrame)
+            tk.Label(self.mainFrame, text="TOTP", width=width).grid(row=2, column=0)
+            totp = tk.Entry(self.mainFrame, width=width*2)
             totp.grid(row=2, column=1)
-        tk.Label(self.mainFrame, text="Host Name").grid(row=3, column=0)
+        tk.Label(self.mainFrame, text="Host Name", width=width).grid(row=3, column=0)
         tk.OptionMenu(self.mainFrame, selected_host, *self.unique_hosts).grid(row=3, column=1)
         # different submit button
         if use_totp:
@@ -163,10 +168,100 @@ class VDIClient:
         tk.Label(vmFrame, text=f"{vm.get('name')}", width=frame_width, justify='left').grid(row=0, column=1, columnspan=2)
         tk.Label(vmFrame, text=f"VM:{vm.get('vmid')}", width=frame_width, justify='left').grid(row=1, column=1, columnspan=2)
         tk.Label(vmFrame, text=f"{vm.get('status')}", width=frame_width, justify='left').grid(row=2, column=1, columnspan=2)
-        tk.Button(vmFrame, text="Connect").grid(row=0, rowspan=2, column=4)
+        tk.Button(vmFrame, text="Connect", command=lambda: self.run_vm(vm.get('node'), vm.get('vmid'), vm.get('type')))\
+        .grid(row=0, rowspan=2, column=4)
         ttk.Separator(vmFrame, orient='horizontal').grid(row=4, column=0 ,columnspan=6, sticky='ew')
         return vmFrame
 
+    def run_vm(self, host_node, vmid, vmtype):
+        print(f'trying to run vm{vmid}')
+        status = False
+        if vmtype == 'qemu':
+            vm_status = self.proxmox.nodes(host_node).qemu(str(vmid)).status.get('current')
+        elif vmtype == 'lxc':
+            vm_status = self.proxmox.nodes(host_node).lxc(str(vmid)).status.get('current')
+        else:
+            raise NotImplementedError
+        if vm_status['status'] != 'running':
+            # start VM
+            print(f'Starting {vm_status["name"]}...')
+            try:
+                if vmtype == 'qemu':
+                    jobid = self.proxmox.nodes(host_node).qemu(str(vmid)).status.start.post(timeout=28)
+                elif vmtype == 'lxc':
+                    jobid = self.proxmox.nodes(host_node).lxc(str(vmid)).status.start.post(timeout=28)
+                else:
+                    raise NotImplementedError
+            except proxmoxer.core.ResourceException as e:
+                print(f"Unable to start VM, please provide your system administrator with the following error:\n {e!r}")
+                return False
+            retries = 0
+            running = False
+            while not running and retries < int(self.config.get('proxmox').get("vm-start-timeout")):
+                try:
+                    print(f'try {retries}')
+                    jobstatus = self.proxmox.nodes(host_node).tasks(jobid).status.get()
+                except Exception as e:
+                    jobstatus = {}
+                    print(e)
+                if 'exitstatus' in jobstatus:
+                    if jobstatus['exitstatus'] != 'OK':
+                        print('Unable to start VM, please contact your system administrator for assistance')
+                        break
+                    else:
+                        running = True
+                        status = True
+                time.sleep(1)
+                retries += 1
+            if not status:
+                return status
+        if vmtype == 'qemu':
+            vm_spice_config = self.proxmox.nodes(host_node).qemu(str(vmid)).spiceproxy.post()
+        elif vmtype == 'lxc':
+            vm_spice_config = self.proxmox.nodes(host_node).lxc(str(vmid)).spiceproxy.post()
+        else:
+            raise NotImplementedError
+        spiceconfigParser = configparser.ConfigParser()
+        spiceconfigParser['virt-viewer'] = {}
+        # todo fix spice proxy issue
+        spice_proxy = self.config.get('proxmox').get('SpiceProxyRedirect')
+        for key, value in vm_spice_config.items():
+            if key == 'proxy':
+                val = value[7:].lower()
+                if val == spice_proxy.get('from'):
+                    spiceconfigParser['virt-viewer'][key] = f'http://{spice_proxy.get("to")}'
+                else:
+                    spiceconfigParser['virt-viewer'][key] = f'{value}'
+            else:
+                spiceconfigParser['virt-viewer'][key] = f'{value}'
+        # todo support extra virt viwer config
+        if self.config.get("virt-viewer"):
+            # for key, value
+            pass
+        inifile = StringIO('')
+        spiceconfigParser.write(inifile)
+        inifile.seek(0)
+        inistring = inifile.read()
+        if self.config.get('debug').get('config-viewer'):
+            # todo: show config
+            pass
+        vv_cmd = [str(self.spice_client).strip()]
+        if self.config.get("ui").get('kiosk'):
+            vv_cmd.append('--kiosk')
+            vv_cmd.append('--kiosk-quit')
+            vv_cmd.append('on-disconnect')
+        elif self.config.get("ui").get('fullscreen'):
+            vv_cmd.append('--full-screen')
+        vv_cmd.append('-') # listen to stdin
+        process = subprocess.Popen(vv_cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        try:
+            output = process.communicate(input=inistring.encode('utf-8'), timeout=5)[0]
+        except subprocess.TimeoutExpired:
+            pass
+        status = True
+        return status
+        # # run virt viewer with the config
+        # subprocess.Popen()
     def vm_window(self):
         vm_list = self.get_vms()
         print(vm_list)
@@ -212,6 +307,8 @@ class VDIClient:
             print(f"Unable to display list of VMs:\n {e!r}", 'OK')
             return False
     def run(self):
+        # check that virtviewer exists and is runnable
+        self.check_virt_viewer()
         self.login_window()
         self.tk_root.mainloop()
 
@@ -223,6 +320,29 @@ class VDIClient:
             img = img.resize((60, 60), Image.ANTIALIAS)
         img = ImageTk.PhotoImage(img)
         return img
+
+    def check_virt_viewer(self):
+        try:
+            if os.name == 'nt':  # Windows
+                import csv
+                cmd1 = 'ftype VirtViewer.vvfile'
+                result = subprocess.check_output(cmd1, shell=True)
+                cmdresult = result.decode('utf-8')
+                cmdparts = cmdresult.split('=')
+                for row in csv.reader([cmdparts[1]], delimiter=' ', quotechar='"'):
+                    self.spice_client = row[0]
+                    break
+
+            elif os.name == 'posix':
+                cmd1 = 'which remote-viewer'
+                result = subprocess.check_output(cmd1, shell=True)
+                self.spice_client = 'remote-viewer'
+        except subprocess.CalledProcessError:
+            if os.name == 'nt':
+                print('Installation of virt-viewer missing, please install from https://virt-manager.org/download/')
+            elif os.name == 'posix':
+                print('Installation of virt-viewer missing, please install using `apt install virt-viewer`')
+            sys.exit()
 
 
 if __name__ == "__main__":
