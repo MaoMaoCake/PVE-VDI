@@ -53,8 +53,8 @@ class VDIClient:
         self.width = 400 * self.get_scaling()
         self.height = 200 * self.get_scaling()
 
-        if self.config.get("ui").get("fullscreen"):
-            self.tk_root.attributes('-zoomed', True)
+        # if self.config.get("ui").get("fullscreen"):
+        #     self.tk_root.attributes('-zoomed', True)
 
         if self.config.get("ui").get("kiosk"):
             self.tk_root.attributes("-fullscreen", True)
@@ -223,7 +223,6 @@ class VDIClient:
             raise NotImplementedError
         spiceconfigParser = configparser.ConfigParser()
         spiceconfigParser['virt-viewer'] = {}
-        # todo fix spice proxy issue
         spice_proxy = self.config.get('proxmox').get('SpiceProxyRedirect')
         for key, value in vm_spice_config.items():
             if key == 'proxy':
