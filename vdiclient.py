@@ -56,8 +56,8 @@ class VDIClient:
         # if self.config.get("ui").get("fullscreen"):
         #     self.tk_root.attributes('-zoomed', True)
 
-        if self.config.get("ui").get("kiosk"):
-            self.tk_root.attributes("-fullscreen", True)
+        # if self.config.get("ui").get("kiosk"):
+        #     self.tk_root.attributes("-fullscreen", True)
 
         self.tk_root.title(self.config.get("ui").get('title'))
         self.tk_root.resizable(False, False)
