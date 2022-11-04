@@ -199,7 +199,6 @@ class VDIClient:
             running = False
             while not running and retries < int(self.config.get('proxmox').get("vm-start-timeout")):
                 try:
-                    print(f'try {retries}')
                     jobstatus = self.proxmox.nodes(host_node).tasks(jobid).status.get()
                 except Exception as e:
                     jobstatus = {}
@@ -263,7 +262,6 @@ class VDIClient:
         # subprocess.Popen()
     def vm_window(self):
         vm_list = self.get_vms()
-        print(vm_list)
         if vm_list:
             self.clear(self.mainFrame)
             # get vm list
