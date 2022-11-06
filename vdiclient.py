@@ -50,8 +50,8 @@ class VDIClient:
         return 1
     def config_ui(self):
         # todo handle scaling
-        self.width = 400 * self.get_scaling()
-        self.height = 200 * self.get_scaling()
+        self.width = int(400 * self.get_scaling())
+        self.height = int(200 * self.get_scaling())
 
         # if self.config.get("ui").get("fullscreen"):
         #     self.tk_root.attributes('-zoomed', True)
@@ -232,10 +232,10 @@ class VDIClient:
                     spiceconfigParser['virt-viewer'][key] = f'{value}'
             else:
                 spiceconfigParser['virt-viewer'][key] = f'{value}'
-        # todo support extra virt viwer config
-        if self.config.get("virt-viewer"):
-            # for key, value
-            pass
+        extra_vv_config = self.config.get("virt-viewer")
+        if extra_vv_config:
+            for config in extra_vv_config:
+                spiceconfigParser['virt-viewer'][config] = f'{extra_vv_config[config]}'
         inifile = StringIO('')
         spiceconfigParser.write(inifile)
         inifile.seek(0)
