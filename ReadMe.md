@@ -30,4 +30,4 @@ Temporary machines are machines that only persist for the duration of the user's
 PVE-VDI adds support for machine sharing between users. This support is done using a lock on the provisioning server so 2 users will not be able to connect to the same system at the same time.The system will lock the machine when a user connects preventing other people from connecting. The current user will have to manually release the lock for the other user to be able to login. This is to make sure that a user cannot be hijacked from the machine they are currently using.
 
 ## User Backups
-Users are able to backup their machine by themselves and also set a 
+Users are able to backup their machine by themselves and also do a restore on their own.
