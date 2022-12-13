@@ -1,5 +1,5 @@
 # What is Proxmox VDI?
-Proxmox VDI is a project aimed at leveraging proxmox as a Virtual Desktop environment.
+Proxmox VDI is a project aimed at leveraging proxmox as a Virtual Desktop environment. This project is based  on proxmox, virt-viewer and noVNC.
 
 # Why use Proxmox VDI? 
 Proxmox VDI is a fully open-source system aimed at SMEs to reduce the cost of maintaing desktops infrastructure. PVE-VDI leverages cloudinit and cloud images to support a wide variety of OSes. 
