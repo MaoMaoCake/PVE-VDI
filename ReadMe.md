@@ -36,3 +36,6 @@ Users are able to backup their machine by themselves and also do a restore on th
 
 ## Protocols
 The aim is to support SPICE and noVNC, but SPICE will be the main priority.
+
+## What OS does PVE-VDI Support? 
+PVE-VDI uses cloudinit for it's vm provisioning, therefore it supports a wide variety of OSes. This limitations is only for VMs that are created by the user. The Admins is able to install an OS such as windows on proxmox itself and assign it to a user.
