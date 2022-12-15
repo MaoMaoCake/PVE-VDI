@@ -14,9 +14,6 @@ from fastapi import Depends, HTTPException, status
 
 # import env variable tools
 import os
-from dotenv import load_dotenv
-# load the env variables
-load_dotenv()
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
