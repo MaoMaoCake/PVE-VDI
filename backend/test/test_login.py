@@ -18,8 +18,8 @@ class TestLoginCase(unittest.TestCase):
         If login fails the reply will be none
         :return:
         """
-        tester = authenticate_user(username='admin',password='password')
-        self.assertFalse(None, tester)
+        tester = authenticate_user(username='admin',password='wrongpassword')
+        self.assertEqual(None, tester)
 
 # class TestTokenEndpointCase(unittest.TestCase):
 #     def test_valid_token(self):

@@ -15,24 +15,33 @@ from fastapi import Depends, HTTPException, status
 # import env variable tools
 import os
 
+# pull the database connector
+from ..database.utils import dbexecute
+
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
-def verify_password(plain_password, hashed_password) -> str:
+def verify_password(plain_password: str, hashed_password: str) -> str:
     return pwd_context.verify(plain_password, hashed_password)
 
+def create_password_hash(plain_password: str) -> str:
+    return pwd_context.hash(plain_password)
 
 def get_password_hash(password) -> str:
     return pwd_context.hash(password)
 
 def authenticate_user(username: str , password: str) -> User | None:
-    if password == 'password' and username == 'admin':
-        return User(user_id=1, username='admin', role='Admin')
-    else:
+    response = dbexecute(f"SELECT id, username, password FROM users WHERE username='{username}'")
+    db_user_id, db_username, db_password = response[0]
+    if len(response) != 1:
+        # this should only ever have 1 since username is unique
         return None
-
+    else:
+         if verify_password(plain_password=password, hashed_password=db_password):
+             # todo Get roles dynamically
+             return User(user_id=db_user_id, username=db_username, role='Admin')
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     to_encode = data.copy()
     if expires_delta:
@@ -49,8 +58,11 @@ def get_user(username) -> User | None:
     :param username:
     :return: User class
     """
-    if username == 'admin':
-        return User(user_id=1, username='admin', role="Admin")
+    data = dbexecute(f"SELECT id, username FROM users WHERE username='{username}'")
+    # the data here should always be 1 since username is unique
+    db_user_id, db_username = data[0]
+    # todo Get roles dynamically
+    return User(user_id=db_user_id, username=db_username, role="Admin")
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
