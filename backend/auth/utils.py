@@ -1,12 +1,24 @@
+# for env variables
 import os
-from .models import User
+
+# making jwt
 from datetime import timedelta, datetime
 from jose import jwt, JWTError
 from fastapi.security import OAuth2PasswordBearer
-from fastapi import Depends, HTTPException, status
+
+# utility imports
+from fastapi import Depends, status
 from typing import Optional
-import requests
+
+# define models
+from .models import User
 from .errors import NoRealmProvidedException, CredentialsException
+
+# requests library
+import requests
+import urllib3
+urllib3.disable_warnings()
+
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -22,7 +34,7 @@ def authenticate_user(username: str, password: str, totp: Optional[str], realm: 
     :return: User
     """
     # this will be gotten from ENV variable later
-    pm_url = 'https://172.16.1.2:8006' + "/api2/json/access/ticket"
+    pm_url = os.getenv("PVE_URL") + "/api2/json/access/ticket"
     querystring = {"username": username, "password": password}
     if totp:
         querystring['totp'] = totp
