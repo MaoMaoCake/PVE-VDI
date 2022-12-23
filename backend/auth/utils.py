@@ -13,7 +13,8 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 def authenticate_user(username: str, password: str, totp: Optional[str], realm: Optional[str]) -> User | None:
     """
-    Takes in
+    Takes in authentication parameters and authenticates them with proxmox.
+
     :param username: str
     :param password: str
     :param totp: Optional[str]
@@ -22,17 +23,13 @@ def authenticate_user(username: str, password: str, totp: Optional[str], realm: 
     """
     # this will be gotten from ENV variable later
     pm_url = 'https://172.16.1.2:8006' + "/api2/json/access/ticket"
-    querystring = ""
+    querystring = {"username": username, "password": password}
     if totp:
-        # do totp handling here
-        pass
-    else:
-        if realm:
-            querystring = {"username": username, "password": password, "realm": realm}
-        elif "@" in username:
-            querystring = {"username": username, "password": password}
-        else:
-            raise NoRealmProvidedException
+        querystring['totp'] = totp
+    if realm:
+        querystring["realm"] = realm
+    if not realm and "@" not in username:
+        raise NoRealmProvidedException
 
     res = requests.post(pm_url, params=querystring, verify=False)
     if res.status_code == status.HTTP_200_OK:
@@ -43,7 +40,7 @@ def authenticate_user(username: str, password: str, totp: Optional[str], realm: 
         return None
 
 
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -54,7 +51,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     return encoded_jwt
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
     try:
         payload = jwt.decode(token, os.getenv("SECRET_KEY"), algorithms=[os.getenv("ALGORITHM")])
         username: str = payload.get("username")

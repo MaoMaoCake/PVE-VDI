@@ -10,7 +10,13 @@ authRouter = APIRouter()
 
 
 @authRouter.post("/token", response_model=Token)
-async def login_for_access_token(form_data: PVEOAuth2PasswordRequestForm = Depends()):
+async def login_for_access_token(form_data: PVEOAuth2PasswordRequestForm = Depends()) -> dict:
+    """
+    Takes in form data from the frontend and authenticates the user using the proxmox authentication api.
+
+    :param form_data:
+    :return:
+    """
     user = authenticate_user(form_data.username, form_data.password,form_data.totp,form_data.realm)
     if not user:
         raise HTTPException(
@@ -26,5 +32,11 @@ async def login_for_access_token(form_data: PVEOAuth2PasswordRequestForm = Depen
 
 
 @authRouter.get("/users/me/", response_model=User)
-async def read_users_me(current_user: User = Depends(get_current_user)):
+async def read_users_me(current_user: User = Depends(get_current_user)) -> User:
+    """
+    This is the endpoint for getting current user.
+
+    :param current_user:
+    :return:
+    """
     return current_user
