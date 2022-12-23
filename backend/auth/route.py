@@ -11,7 +11,7 @@ authRouter = APIRouter()
 
 @authRouter.post("/token", response_model=Token)
 async def login_for_access_token(form_data: PVEOAuth2PasswordRequestForm = Depends()):
-    user = authenticate_user(form_data.username, form_data.password)
+    user = authenticate_user(form_data.username, form_data.password,form_data.totp,form_data.realm)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -20,7 +20,7 @@ async def login_for_access_token(form_data: PVEOAuth2PasswordRequestForm = Depen
         )
     access_token_expires = timedelta(minutes=float(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")))
     access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
+        data={"username": user.username, "ticket": user.Ticket, "CSRFToken": user.CSRFToken}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
