@@ -7,6 +7,7 @@ from fastapi import Depends, HTTPException, status
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
+
 def authenticate_user(username: str, password: str):
     # this should connect to pve
     if username == "admin" and password == "password":
@@ -22,6 +23,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, os.getenv("SECRET_KEY"), algorithm=os.getenv("ALGORITHM"))
     return encoded_jwt
+
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
