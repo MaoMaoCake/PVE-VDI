@@ -3,7 +3,7 @@ load_dotenv('backend/backend.env')
 
 from fastapi import FastAPI
 from .auth.route import authRouter
-from .pve.routes import pveRouter
+from .pve.route import pveRouter
 
 description = """
 PVE VDI is a VDI solution for proxmox
