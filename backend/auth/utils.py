@@ -11,7 +11,7 @@ from fastapi import Depends, status
 from typing import Optional
 
 # define models
-from .models import User
+from .models import User, PVERealmList, PVERealm
 from .errors import NoRealmProvidedException, CredentialsException
 
 # requests library
@@ -74,3 +74,16 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
         return User(username=username, Ticket=ticket, CSRFToken=CSRF)
     except JWTError:
         raise CredentialsException
+
+
+def get_pve_realm() -> PVERealmList:
+    """
+    Gets the authentication realm from proxmox
+    :return:
+    """
+    realm_list = []
+    pve_url = os.getenv("PVE_URL") + "/api2/json/access/domains"
+    res = requests.get(pve_url).json()
+    for realm in res.get('data'):
+        realm_list.append(PVERealm(name=realm.realm))
+    return PVERealmList(pve_realms=realm_list)

@@ -27,3 +27,11 @@ class PVEOAuth2PasswordRequestForm():
         self.password = password
         self.totp = totp
         self.realm = realm
+
+
+class PVERealm(BaseModel):
+    name: str
+
+
+class PVERealmList(BaseModel):
+    pve_realms: list[PVERealm]

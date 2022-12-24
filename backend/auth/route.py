@@ -4,7 +4,7 @@ from datetime import timedelta
 from fastapi import Depends, HTTPException, status, APIRouter
 
 from .models import Token, User, PVEOAuth2PasswordRequestForm
-from .utils import create_access_token, authenticate_user, get_current_user
+from .utils import create_access_token, authenticate_user, get_current_user, get_pve_realm
 
 authRouter = APIRouter()
 
@@ -40,3 +40,7 @@ async def read_users_me(current_user: User = Depends(get_current_user)) -> User:
     :return:
     """
     return current_user
+
+@authRouter.get("/api/auth/realms")
+def pve_realm():
+    return get_pve_realm()
