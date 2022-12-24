@@ -83,7 +83,7 @@ def get_pve_realm() -> PVERealmList:
     """
     realm_list = []
     pve_url = os.getenv("PVE_URL") + "/api2/json/access/domains"
-    res = requests.get(pve_url).json()
+    res = requests.get(pve_url, verify=False).json()
     for realm in res.get('data'):
-        realm_list.append(PVERealm(name=realm.realm))
+        realm_list.append(PVERealm(name=realm.get("realm")))
     return PVERealmList(pve_realms=realm_list)
