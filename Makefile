@@ -10,30 +10,30 @@ build-svelte: # builds the .svelte file to html
 
 # build docker images for food-buddy
 build-frontend:
-	docker build --network=host -t catsmao/PVE-VDI-frontend $(mkfile_dir)/frontend
+	docker build --network=host -t catsmao/pve-vdi-frontend $(mkfile_dir)/frontend
 
 build-backend:
-	docker build --network=host -t catsmao/PVE-VDI-backend $(mkfile_dir)/backend
+	docker build --network=host -t catsmao/pve-vdi-backend $(mkfile_dir)/backend
 
 build-frontend-no-cache:
-	docker build --no-cache --network=host -t catsmao/PVE-VDI-frontend $(mkfile_dir)/frontend
+	docker build --no-cache --network=host -t catsmao/pve-vdi-frontend $(mkfile_dir)/frontend
 
 build-backend-no-cache:
-	docker build --no-cache --network=host -t catsmao/PVE-VDI-backend $(mkfile_dir)/backend
+	docker build --no-cache --network=host -t catsmao/pve-vdi-backend $(mkfile_dir)/backend
 
 build-docker:build-frontend-no-cache build-backend-no-cache
 
 
 # Docker Commands
 push-dockers:
-	docker push catsmao/PVE-VDI-frontend:latest
-	docker push catsmao/PVE-VDI-backend:latest
+	docker push catsmao/pve-vdi-frontend:latest
+	docker push catsmao/pve-vdi-backend:latest
 
 run-frontend:
-	 docker run -it --rm -d -p 3000:3000 --name frontend catsmao/PVE-VDI-frontend
+	 docker run -it --rm -d -p 3000:3000 --name frontend catsmao/pve-vdi-frontend
 
 run-backend:
-	 docker run -it --rm -d -p 8000:8000 --name backend catsmao/PVE-VDI-backend
+	 docker run -it --rm -d -p 8000:8000 --name backend catsmao/pve-vdi-backend
 
 run-all-docker:
 	docker-compose up -d
