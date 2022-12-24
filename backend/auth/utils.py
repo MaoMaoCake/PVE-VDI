@@ -1,47 +1,57 @@
-# import security modules
-from fastapi.security import OAuth2PasswordBearer
-from passlib.context import CryptContext
-
-# user model
-from .models  import User, TokenData
-
-# creating jwt
-from datetime import timedelta, datetime
-from jose import JWTError, jwt
-
-# fast API tools
-from fastapi import Depends, HTTPException, status
-
-# import env variable tools
+# for env variables
 import os
 
-# pull the database connector
-from ..database.utils import dbexecute
+# making jwt
+from datetime import timedelta, datetime
+from jose import jwt, JWTError
+from fastapi.security import OAuth2PasswordBearer
+
+# utility imports
+from fastapi import Depends, status
+from typing import Optional
+
+# define models
+from .models import User, PVERealmList, PVERealm
+from .errors import NoRealmProvidedException, CredentialsException
+
+# requests library
+import requests
+import urllib3
+urllib3.disable_warnings()
 
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
-def verify_password(plain_password: str, hashed_password: str) -> str:
-    return pwd_context.verify(plain_password, hashed_password)
+def authenticate_user(username: str, password: str, totp: Optional[str], realm: Optional[str]) -> User | None:
+    """
+    Takes in authentication parameters and authenticates them with proxmox.
 
-def create_password_hash(plain_password: str) -> str:
-    return pwd_context.hash(plain_password)
+    :param username: str
+    :param password: str
+    :param totp: Optional[str]
+    :param realm: Optional[str]
+    :return: User
+    """
+    # this will be gotten from ENV variable later
+    pm_url = os.getenv("PVE_URL") + "/api2/json/access/ticket"
+    querystring = {"username": username, "password": password}
+    if totp:
+        querystring['totp'] = totp
+    if realm:
+        querystring["realm"] = realm
+    if not realm and "@" not in username:
+        raise NoRealmProvidedException
 
-def get_password_hash(password) -> str:
-    return pwd_context.hash(password)
-
-def authenticate_user(username: str , password: str) -> User | None:
-    response = dbexecute(f"SELECT id, username, password FROM users WHERE username='{username}'")
-    db_user_id, db_username, db_password = response[0]
-    if len(response) != 1:
-        # this should only ever have 1 since username is unique
-        return None
+    res = requests.post(pm_url, params=querystring, verify=False)
+    if res.status_code == status.HTTP_200_OK:
+        data = res.json().get('data')
+        username, ticket, CSRF = data.get("username"), data.get("ticket"), data.get("CSRFPreventionToken")
+        return User(username=username, Ticket=ticket, CSRFToken=CSRF)
     else:
-         if verify_password(plain_password=password, hashed_password=db_password):
-             # todo Get roles dynamically
-             return User(user_id=db_user_id, username=db_username, role='Admin')
+        return None
+
+
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     to_encode = data.copy()
     if expires_delta:
@@ -49,39 +59,31 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     else:
         expire = datetime.utcnow() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, os.getenv("OAUTH_SECRET_KEY"), algorithm=os.getenv("OAUTH_ALGORITHM"))
+    encoded_jwt = jwt.encode(to_encode, os.getenv("SECRET_KEY"), algorithm=os.getenv("ALGORITHM"))
     return encoded_jwt
 
-def get_user(username) -> User | None:
-    """
-    Gets username and returns the User Class
-    :param username:
-    :return: User class
-    """
-    data = dbexecute(f"SELECT id, username FROM users WHERE username='{username}'")
-    # the data here should always be 1 since username is unique
-    db_user_id, db_username = data[0]
-    # todo Get roles dynamically
-    return User(user_id=db_user_id, username=db_username, role="Admin")
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
     try:
-        payload = jwt.decode(token, os.getenv("OAUTH_SECRET_KEY"), algorithms=[os.getenv("OAUTH_ALGORITHM")])
-        username: str = payload.get("sub")
+        payload = jwt.decode(token, os.getenv("SECRET_KEY"), algorithms=[os.getenv("ALGORITHM")])
+        username: str = payload.get("username")
+        ticket: str = payload.get("ticket")
+        CSRF: str = payload.get("CSRFToken")
         if username is None:
-            raise credentials_exception
-        token_data = TokenData(username=username)
+            raise CredentialsException
+        return User(username=username, Ticket=ticket, CSRFToken=CSRF)
     except JWTError:
-        raise credentials_exception
-    user = get_user(username=token_data.username)
-    if user is None:
-        raise credentials_exception
-    return user
+        raise CredentialsException
 
-async def get_current_active_user(current_user: User = Depends(get_current_user)):
-    return current_user
+
+def get_pve_realm() -> PVERealmList:
+    """
+    Gets the authentication realm from proxmox
+    :return:
+    """
+    realm_list = []
+    pve_url = os.getenv("PVE_URL") + "/api2/json/access/domains"
+    res = requests.get(pve_url).json()
+    for realm in res.get('data'):
+        realm_list.append(PVERealm(name=realm.realm))
+    return PVERealmList(pve_realms=realm_list)
