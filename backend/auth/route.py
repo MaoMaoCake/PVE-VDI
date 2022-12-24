@@ -17,7 +17,7 @@ async def login_for_access_token(form_data: PVEOAuth2PasswordRequestForm = Depen
     :param form_data:
     :return:
     """
-    user = authenticate_user(form_data.username, form_data.password,form_data.totp,form_data.realm)
+    user = authenticate_user(form_data.username, form_data.password, form_data.totp, form_data.realm)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -26,7 +26,8 @@ async def login_for_access_token(form_data: PVEOAuth2PasswordRequestForm = Depen
         )
     access_token_expires = timedelta(minutes=float(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")))
     access_token = create_access_token(
-        data={"username": user.username, "ticket": user.Ticket, "CSRFToken": user.CSRFToken}, expires_delta=access_token_expires
+        data={"username": user.username, "ticket": user.Ticket, "CSRFToken": user.CSRFToken},
+        expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -40,6 +41,7 @@ async def read_users_me(current_user: User = Depends(get_current_user)) -> User:
     :return:
     """
     return current_user
+
 
 @authRouter.get("/api/auth/realms")
 def pve_realm():
