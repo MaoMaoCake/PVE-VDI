@@ -15,7 +15,15 @@ class PVEVM(BaseModel):
     total_memory: str
     status: str
     vm_id: int
+    type: str = 'qemu'
 
+class PVELXC(BaseModel):
+    name: str
+    total_cpus: int
+    total_memory: str
+    status: str
+    vm_id: int
+    type: str = 'lxc'
 
 class PVENodeList(BaseModel):
     node_list: list[PVENode]
@@ -23,3 +31,8 @@ class PVENodeList(BaseModel):
 
 class PVEVMList(BaseModel):
     vm_list: list[PVEVM]
+
+class PVELXCList(BaseModel):
+    lxc_list: list[PVELXC]
+class PVEGuestList(BaseModel):
+    guest_list: list[PVEVM | PVELXC]

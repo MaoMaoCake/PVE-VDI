@@ -2,7 +2,7 @@ import os
 
 import requests
 
-from .models import PVENode, PVENodeList, PVEVM, PVEVMList
+from .models import PVENode, PVENodeList, PVEVM, PVEVMList, PVELXCList, PVELXC
 import math
 
 
@@ -64,5 +64,32 @@ def get_vm_from(node: str, csrf: str, token: str) -> PVEVMList | None:
                 )
             )
         return PVEVMList(vm_list=vm_list)
+    else:
+        return None
+
+def get_lxc_from(node: str, csrf: str, token: str) -> PVELXCList | None:
+    lxc_list = []
+    pve_url = os.getenv("PVE_URL") + f"/api2/json/nodes/{node}/lxc"
+    headers = {"CSRFPreventionToken": csrf,
+               "Cookie": "PVEAuthCookie=" + token}
+    res = requests.get(pve_url, headers=headers, verify=False)
+    if res.status_code == 200:
+        data = res.json().get("data")
+        for entry in data:
+            name = entry.get("name")
+            total_cpu = entry.get("cpus")
+            total_memory = entry.get("maxmem")
+            status = entry.get("status")
+            vm_id = entry.get("vmid")
+            lxc_list.append(
+                PVELXC(
+                    name=name,
+                    total_cpus=int(total_cpu),
+                    total_memory=convert_size(total_memory),
+                    status=status,
+                    vm_id=int(vm_id),
+                )
+            )
+        return PVELXCList(lxc_list=lxc_list)
     else:
         return None
