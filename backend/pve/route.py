@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends
 
 from ..auth.utils import get_current_user
 from ..auth.models import User
-from .utils import get_pve_nodes
-from .models import PVENodeList
+from .utils import get_pve_nodes, get_vm_from
+from .models import PVENodeList, PVEVMList
 
 pveRouter = APIRouter()
 
@@ -16,3 +16,7 @@ def nodes(current_user: User = Depends(get_current_user)) -> PVENodeList:
     """
     return get_pve_nodes(current_user.CSRFToken, current_user.Ticket)
 
+
+@pveRouter.get("/api/pve/{node}/vms", response_model=PVEVMList, tags=["PVE"])
+def get_vm(node: str, current_user: User = Depends(get_current_user)) -> PVEVMList:
+    return get_vm_from(node, current_user.CSRFToken, current_user.Ticket)
